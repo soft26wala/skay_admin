@@ -15,6 +15,7 @@ import Orders from "./components/Orders";
 import Products from "./components/Products";
 import Profile from "./components/Profile";
 import Users from "./components/Users";
+import WebManagement from "./components/WebManagement";
 import { useEffect } from "react";
 import { getUser } from "./store/slices/authSlice";
 import { getDashboardStats } from "./store/slices/adminSlice";
@@ -24,9 +25,11 @@ function App() {
   const { openedComponent } = useSelector((state) => state.extra);
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
+
   useEffect(() => {
     dispatch(getUser());
   }, []);
+
   useEffect(() => {
     if (isAuthenticated) {
       dispatch(fetchAllProducts());
@@ -46,7 +49,8 @@ function App() {
         return <Profile />;
       case "Products":
         return <Products />;
-
+      case "Web":
+        return <WebManagement />;
       default:
         return <Dashboard />;
     }

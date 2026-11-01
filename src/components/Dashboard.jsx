@@ -8,32 +8,29 @@ import TopProductsChart from "./dashboard-components/TopProductsChart";
 
 const Dashboard = () => {
   return (
-    <>
-      <main className="p-[10px] pl-[10px] md:pl-[17rem] w-full">
-        <div className="flex-1 md:p-6">
-          <Header />
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p>Check the sales and value.</p>
+    <main className="p-4 pl-4 md:pl-[20rem] pr-4 md:pr-6 py-5 w-full min-h-screen text-slate-100">
+      <div className="flex-1 max-w-7xl mx-auto space-y-6">
+        <Header />
 
-          <Stats />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6">
-            <MonthlySalesChart />
+        {/* 1. Executive Top KPI Stats */}
+        <Stats />
 
-            <OrdersChart />
-
-            <TopProductsChart />
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 py-4">
-            <TopSellingProducts />
-            <div>
-              <MiniSummary />
-            </div>
-          </div>
+        {/* 2. Visual Performance Analytics Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <MonthlySalesChart />
+          <OrdersChart />
+          <TopProductsChart />
         </div>
-      </main>
-    </>
+
+        {/* 3. Detailed Leaderboard & Summary */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <TopSellingProducts />
+          <MiniSummary />
+        </div>
+      </div>
+    </main>
   );
 };
 
 export default Dashboard;
+
