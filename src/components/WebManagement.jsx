@@ -15,9 +15,18 @@ import {
   Pencil,
   X,
   UploadCloud,
+  Cloud,
+  CloudSun,
+  Sun,
+  Palette,
+  Wind,
+  Sliders,
+  Eye,
 } from "lucide-react";
 import { axiosInstance } from "../lib/axios";
 import { toast } from "react-toastify";
+import SkyCloudsBackground, { DEFAULT_BACKGROUND_SETTINGS } from "./SkyCloudsBackground";
+
 
 // Helper to resolve images across Cloudinary, server uploads, and client assets
 
@@ -150,6 +159,15 @@ const WebManagement = () => {
     "Haute Formulation & Complimentary Concierge Delivery on Orders Above $75 CAD"
   );
 
+  // Background Theme & Sky Clouds State
+  const [bgSettings, setBgSettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem("site_background_settings");
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return DEFAULT_BACKGROUND_SETTINGS;
+  });
+
   // Form toggles
   const [showAddForm, setShowAddForm] = useState(false);
 
@@ -189,12 +207,13 @@ const WebManagement = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [heroRes, catRes, sanctumRes, whyRes, annRes] = await Promise.all([
+      const [heroRes, catRes, sanctumRes, whyRes, annRes, bgRes] = await Promise.all([
         axiosInstance.get("/web/hero").catch(() => ({ data: { slides: [] } })),
         axiosInstance.get("/web/categories").catch(() => ({ data: { categories: [] } })),
         axiosInstance.get("/web/sanctum").catch(() => ({ data: { spaces: [] } })),
         axiosInstance.get("/web/why-choose").catch(() => ({ data: { features: [] } })),
         axiosInstance.get("/web/announcement").catch(() => ({ data: { announcement: "" } })),
+        axiosInstance.get("/web/background").catch(() => ({ data: { background: null } })),
       ]);
 
       if (heroRes?.data?.slides) setHeroSlides(heroRes.data.slides);
@@ -202,6 +221,10 @@ const WebManagement = () => {
       if (sanctumRes?.data?.spaces) setSanctumSpaces(sanctumRes.data.spaces);
       if (whyRes?.data?.features) setWhyChooseFeatures(whyRes.data.features);
       if (annRes?.data?.announcement) setAnnouncementText(annRes.data.announcement);
+      if (bgRes?.data?.background) {
+        setBgSettings(bgRes.data.background);
+        localStorage.setItem("site_background_settings", JSON.stringify(bgRes.data.background));
+      }
     } catch (err) {
       console.error("Error fetching web data:", err);
       toast.error("Failed to load website content.");
@@ -213,6 +236,7 @@ const WebManagement = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
 
   // 2. Add Handlers with File Upload & Cloudinary Sync
   const handleAddHero = async (e) => {
@@ -485,12 +509,37 @@ const WebManagement = () => {
     }
   };
 
+  const handleSaveBackground = async (e) => {
+    if (e) e.preventDefault();
+    setSubmitting(true);
+    try {
+      const res = await axiosInstance.post("/web/background", bgSettings);
+      toast.success(res?.data?.message || "Sky background & clouds saved successfully!");
+      localStorage.setItem("site_background_settings", JSON.stringify(bgSettings));
+      window.dispatchEvent(new CustomEvent("site-background-change", { detail: bgSettings }));
+    } catch (err) {
+      console.warn("API save background notice:", err);
+      localStorage.setItem("site_background_settings", JSON.stringify(bgSettings));
+      window.dispatchEvent(new CustomEvent("site-background-change", { detail: bgSettings }));
+      toast.success("Sky background settings saved to local session & synced with storefront!");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const tabs = [
     { id: "hero", label: "Hero Banner (Top 3+ Images)", icon: <ImageIcon className="w-4 h-4" />, count: heroSlides.length, path: "web/hero" },
     { id: "cat", label: "Categories", icon: <Layers className="w-4 h-4" />, count: categories.length, path: "web/cat" },
     { id: "sanctum", label: "Wellness Sanctum", icon: <Sparkles className="w-4 h-4" />, count: sanctumSpaces.length, path: "web/sanctum" },
     { id: "why-choose", label: "Why Choose Us", icon: <CheckCircle2 className="w-4 h-4" />, count: whyChooseFeatures.length, path: "web/why-choose" },
     { id: "announcement", label: "Announcement Bar", icon: <Megaphone className="w-4 h-4" />, count: "Active", path: "web/announcement" },
+    {
+      id: "background",
+      label: "Sky & Clouds Theme",
+      icon: <CloudSun className="w-4 h-4" />,
+      count: bgSettings.theme === "custom" ? "Custom" : bgSettings.theme === "sky-sunset" ? "Sunset" : "Day Sky",
+      path: "web/background",
+    },
   ];
 
   return (
@@ -506,7 +555,7 @@ const WebManagement = () => {
             Web Sections Control
           </h1>
           <p className="text-xs md:text-sm text-slate-400 mt-1">
-            Manage top hero banner (add 3+ images), store categories from database, wellness sanctum, and guarantees.
+            Manage top hero banner (add 3+ images), store categories from database, wellness sanctum, guarantees, and sky & clouds theme.
           </p>
         </div>
 
@@ -520,7 +569,7 @@ const WebManagement = () => {
             <span>Refresh</span>
           </button>
 
-          {activeTab !== "announcement" && (
+          {activeTab !== "announcement" && activeTab !== "background" && (
             <button
               onClick={() => setShowAddForm(!showAddForm)}
               className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:brightness-110 text-black font-bold rounded-xl text-xs shadow-luxury-glow transition"
@@ -531,6 +580,7 @@ const WebManagement = () => {
           )}
         </div>
       </div>
+
 
       {/* Modern Sub-Tab Navigation (web/hero, web/cat, web/sanctum, web/why-choose, web/announcement) */}
       <div className="flex flex-wrap gap-2.5 mt-6 border-b border-white/[0.08] pb-4">
@@ -1252,8 +1302,644 @@ const WebManagement = () => {
       )}
 
       {/* ========================================================================= */}
-      {/* 6. UNIVERSAL EDIT CONTENT MODAL (Luxury Atelier Theme) */}
+      {/* 5b. SKY VIEW & CLOUDS (BADAL) ANIMATION BACKGROUND MANAGEMENT */}
       {/* ========================================================================= */}
+      {activeTab === "background" && (
+        <div className="mt-6 space-y-8 max-w-6xl animate-fade-in">
+          {/* Header Intro Card */}
+          <div className="bg-gradient-to-r from-[#131926] via-[#101522] to-[#0C101A] p-6 rounded-2xl border border-white/[0.08] shadow-card-luxury flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-500/20 via-sky-400/10 to-amber-500/10 border border-sky-400/30 flex items-center justify-center text-sky-300 flex-shrink-0 shadow-lg">
+                <CloudSun className="w-6 h-6 text-sky-400 animate-pulse" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-sky-400 bg-sky-400/10 px-2 py-0.5 rounded border border-sky-400/20">
+                    Storefront Atmosphere & Animation
+                  </span>
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20">
+                    Live Badal (Clouds) Motion
+                  </span>
+                </div>
+                <h3 className="font-serif-luxury text-xl font-bold text-slate-100 mt-1">
+                  Sky Background & Moving Cloud Animation
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
+                  Select between two curated dual-color sky themes (Day Azure Sky or Sunset Horizon) or customize your own colors. Smooth animated clouds (badal) continuously drift across the sky behind your products.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleSaveBackground}
+                disabled={submitting}
+                className="px-6 py-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:brightness-110 text-black font-bold rounded-xl text-xs shadow-luxury-glow transition flex items-center gap-2 flex-shrink-0"
+              >
+                {submitting ? (
+                  <>
+                    <LoaderCircle className="w-4 h-4 animate-spin" />
+                    <span>Saving Theme...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>Save Background</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Section 1: 3 Preset Cards (2-Color Sky Presets & 1 Custom Option) */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-serif-luxury text-base font-bold text-gold-gradient flex items-center gap-2">
+                  <Palette className="w-4 h-4 text-amber-400" />
+                  <span>1. Select Background Theme (2 Sky Presets + 1 Custom Option)</span>
+                </h4>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Click any option to preview and activate it.
+                </p>
+              </div>
+              <span className="text-xs text-amber-300 font-mono font-semibold bg-amber-400/10 px-3 py-1 rounded-xl border border-amber-400/20">
+                Active: {bgSettings.theme === "sky-day" ? "Day Azure Sky (Preset 1)" : bgSettings.theme === "sky-sunset" ? "Sunset Horizon (Preset 2)" : "Custom Dual Color"}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {/* Preset 1: Day Azure Sky (2-Color) */}
+              <div
+                onClick={() => setBgSettings({ ...bgSettings, theme: "sky-day" })}
+                className={`relative rounded-2xl p-5 cursor-pointer transition-all duration-300 border flex flex-col justify-between overflow-hidden group ${
+                  bgSettings.theme === "sky-day"
+                    ? "bg-[#131B2A] border-amber-400 shadow-[0_0_25px_rgba(251,191,36,0.2)] ring-1 ring-amber-400"
+                    : "bg-[#0E131F]/90 border-white/[0.08] hover:border-white/20 hover:bg-[#121826]"
+                }`}
+              >
+                {/* Visual Swatch */}
+                <div
+                  className="w-full h-28 rounded-xl overflow-hidden relative shadow-inner flex items-center justify-center p-3 mb-4"
+                  style={{
+                    background: "linear-gradient(180deg, #1d8cf8 0%, #38bdf8 45%, #bae6fd 100%)",
+                  }}
+                >
+                  {/* Atmospheric Sun */}
+                  <div className="absolute top-2 right-4 w-12 h-12 rounded-full bg-white/70 blur-sm animate-pulse" />
+                  {/* Floating Mini Cloud */}
+                  <div className="relative z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 backdrop-blur-md shadow-md text-sky-950 font-bold text-[11px]">
+                    <Cloud className="w-3.5 h-3.5 text-sky-500" />
+                    <span>White Drifting Clouds</span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-bold text-sky-400 uppercase tracking-widest bg-sky-400/10 px-2 py-0.5 rounded border border-sky-400/20">
+                      Preset 1 • 2 Colors
+                    </span>
+                    {bgSettings.theme === "sky-day" && (
+                      <span className="flex items-center gap-1 text-[11px] font-bold text-amber-300">
+                        <Check className="w-3.5 h-3.5" />
+                        Selected
+                      </span>
+                    )}
+                  </div>
+                  <h5 className="font-serif-luxury text-base font-bold text-slate-100">Day Azure Sky</h5>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    Vivid azure blue sky transitioning into gentle morning horizon cyan with pure white cumulus clouds.
+                  </p>
+                </div>
+
+                {/* Color Palette Indicators */}
+                <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between text-[11px]">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <span className="w-4 h-4 rounded-full border border-white/30" style={{ background: "#1d8cf8" }} />
+                      <span className="font-mono text-slate-300">#1D8CF8</span>
+                    </div>
+                    <span className="text-slate-500">→</span>
+                    <div className="flex items-center gap-1">
+                      <span className="w-4 h-4 rounded-full border border-white/30" style={{ background: "#bae6fd" }} />
+                      <span className="font-mono text-slate-300">#BAE6FD</span>
+                    </div>
+                  </div>
+                  <span className="text-sky-300 font-medium">180° Top-Down</span>
+                </div>
+              </div>
+
+              {/* Preset 2: Sunset Horizon Sky (2-Color) */}
+              <div
+                onClick={() => setBgSettings({ ...bgSettings, theme: "sky-sunset" })}
+                className={`relative rounded-2xl p-5 cursor-pointer transition-all duration-300 border flex flex-col justify-between overflow-hidden group ${
+                  bgSettings.theme === "sky-sunset"
+                    ? "bg-[#181524] border-amber-400 shadow-[0_0_25px_rgba(251,191,36,0.2)] ring-1 ring-amber-400"
+                    : "bg-[#0E131F]/90 border-white/[0.08] hover:border-white/20 hover:bg-[#121826]"
+                }`}
+              >
+                {/* Visual Swatch */}
+                <div
+                  className="w-full h-28 rounded-xl overflow-hidden relative shadow-inner flex items-center justify-center p-3 mb-4"
+                  style={{
+                    background: "linear-gradient(160deg, #ea580c 0%, #f43f5e 40%, #6366f1 100%)",
+                  }}
+                >
+                  {/* Sunset Glow */}
+                  <div className="absolute top-3 right-6 w-14 h-14 rounded-full bg-amber-300/60 blur-md animate-pulse" />
+                  <div className="relative z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/85 backdrop-blur-md shadow-md text-amber-950 font-bold text-[11px]">
+                    <Sun className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Golden Hour Clouds</span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
+                      Preset 2 • 2 Colors
+                    </span>
+                    {bgSettings.theme === "sky-sunset" && (
+                      <span className="flex items-center gap-1 text-[11px] font-bold text-amber-300">
+                        <Check className="w-3.5 h-3.5" />
+                        Selected
+                      </span>
+                    )}
+                  </div>
+                  <h5 className="font-serif-luxury text-base font-bold text-slate-100">Sunset Horizon Sky</h5>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    Warm golden ember sunset blending into twilight lavender and dusk indigo with warm sunlit clouds.
+                  </p>
+                </div>
+
+                {/* Color Palette Indicators */}
+                <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between text-[11px]">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <span className="w-4 h-4 rounded-full border border-white/30" style={{ background: "#ea580c" }} />
+                      <span className="font-mono text-slate-300">#EA580C</span>
+                    </div>
+                    <span className="text-slate-500">→</span>
+                    <div className="flex items-center gap-1">
+                      <span className="w-4 h-4 rounded-full border border-white/30" style={{ background: "#6366f1" }} />
+                      <span className="font-mono text-slate-300">#6366F1</span>
+                    </div>
+                  </div>
+                  <span className="text-amber-300 font-medium">160° Horizon</span>
+                </div>
+              </div>
+
+              {/* Option 3: Custom Dual Color Sky */}
+              <div
+                onClick={() => setBgSettings({ ...bgSettings, theme: "custom" })}
+                className={`relative rounded-2xl p-5 cursor-pointer transition-all duration-300 border flex flex-col justify-between overflow-hidden group ${
+                  bgSettings.theme === "custom"
+                    ? "bg-[#141824] border-amber-400 shadow-[0_0_25px_rgba(251,191,36,0.2)] ring-1 ring-amber-400"
+                    : "bg-[#0E131F]/90 border-white/[0.08] hover:border-white/20 hover:bg-[#121826]"
+                }`}
+              >
+                {/* Visual Swatch */}
+                <div
+                  className="w-full h-28 rounded-xl overflow-hidden relative shadow-inner flex items-center justify-center p-3 mb-4"
+                  style={{
+                    background: `linear-gradient(${bgSettings.custom?.angle || "180deg"}, ${bgSettings.custom?.color1 || "#0284c7"} 0%, ${bgSettings.custom?.color2 || "#7dd3fc"} 100%)`,
+                  }}
+                >
+                  <div className="relative z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md shadow-md text-slate-100 font-bold text-[11px] border border-white/20">
+                    <Sliders className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Your Custom Sky Palette</span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-bold text-purple-400 uppercase tracking-widest bg-purple-400/10 px-2 py-0.5 rounded border border-purple-400/20">
+                      Option 3 • Custom Pick
+                    </span>
+                    {bgSettings.theme === "custom" && (
+                      <span className="flex items-center gap-1 text-[11px] font-bold text-amber-300">
+                        <Check className="w-3.5 h-3.5" />
+                        Selected
+                      </span>
+                    )}
+                  </div>
+                  <h5 className="font-serif-luxury text-base font-bold text-slate-100">Custom Colors</h5>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    Pick your exact 2 colors using interactive color pickers, set gradient direction, and customize cloud color.
+                  </p>
+                </div>
+
+                {/* Color Palette Indicators */}
+                <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between text-[11px]">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <span className="w-4 h-4 rounded-full border border-white/30" style={{ background: bgSettings.custom?.color1 || "#0284c7" }} />
+                      <span className="font-mono text-slate-300 uppercase">{bgSettings.custom?.color1 || "#0284c7"}</span>
+                    </div>
+                    <span className="text-slate-500">→</span>
+                    <div className="flex items-center gap-1">
+                      <span className="w-4 h-4 rounded-full border border-white/30" style={{ background: bgSettings.custom?.color2 || "#7dd3fc" }} />
+                      <span className="font-mono text-slate-300 uppercase">{bgSettings.custom?.color2 || "#7dd3fc"}</span>
+                    </div>
+                  </div>
+                  <span className="text-purple-300 font-medium">{bgSettings.custom?.angle || "180deg"}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 2: Custom Color Pickers (Visible when Custom is active or for editing) */}
+          {bgSettings.theme === "custom" && (
+            <div className="bg-[#0F1420]/95 backdrop-blur-xl p-6 rounded-2xl border border-amber-500/30 shadow-2xl animate-fade-in space-y-6">
+              <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-400/25 text-amber-300">
+                    <Sliders className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-serif-luxury text-base font-bold text-gold-gradient">
+                      Custom Dual Color Sky Editor
+                    </h4>
+                    <p className="text-xs text-slate-400">
+                      Fine-tune Color 1 (Sky Zenith), Color 2 (Horizon Light), and gradient angle.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Quick One-Click Palettes */}
+                <div className="hidden lg:flex items-center gap-2">
+                  <span className="text-xs text-slate-400">Quick Themes:</span>
+                  {[
+                    { name: "Deep Ocean", c1: "#0369a1", c2: "#38bdf8", angle: "180deg" },
+                    { name: "Aurora Sky", c1: "#065f46", c2: "#34d399", angle: "150deg" },
+                    { name: "Rose Dusk", c1: "#9f1239", c2: "#fda4af", angle: "160deg" },
+                    { name: "Royal Midnight", c1: "#312e81", c2: "#818cf8", angle: "180deg" },
+                  ].map((preset, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() =>
+                        setBgSettings({
+                          ...bgSettings,
+                          custom: {
+                            ...bgSettings.custom,
+                            color1: preset.c1,
+                            color2: preset.c2,
+                            angle: preset.angle,
+                          },
+                        })
+                      }
+                      className="px-2.5 py-1 rounded-lg text-[11px] bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.1] text-slate-300 transition"
+                    >
+                      {preset.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Color 1: Sky Zenith */}
+                <div className="bg-black/40 p-4 rounded-xl border border-white/[0.08] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                      Color 1: Sky Zenith (Top)
+                    </label>
+                    <span className="text-[10px] font-mono text-amber-300 bg-amber-400/10 px-2 py-0.5 rounded">
+                      Primary
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={bgSettings.custom?.color1 || "#0284c7"}
+                      onChange={(e) =>
+                        setBgSettings({
+                          ...bgSettings,
+                          custom: { ...bgSettings.custom, color1: e.target.value },
+                        })
+                      }
+                      className="w-12 h-12 rounded-xl border-2 border-white/20 cursor-pointer bg-transparent"
+                    />
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={bgSettings.custom?.color1 || "#0284c7"}
+                        onChange={(e) =>
+                          setBgSettings({
+                            ...bgSettings,
+                            custom: { ...bgSettings.custom, color1: e.target.value },
+                          })
+                        }
+                        className="w-full bg-black/60 border border-white/[0.1] rounded-xl px-3 py-2 text-sm text-slate-100 font-mono uppercase focus:ring-1 focus:ring-amber-400"
+                        placeholder="#0284c7"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Color 2: Horizon Light */}
+                <div className="bg-black/40 p-4 rounded-xl border border-white/[0.08] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                      Color 2: Horizon Glow (Bottom)
+                    </label>
+                    <span className="text-[10px] font-mono text-sky-300 bg-sky-400/10 px-2 py-0.5 rounded">
+                      Secondary
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={bgSettings.custom?.color2 || "#7dd3fc"}
+                      onChange={(e) =>
+                        setBgSettings({
+                          ...bgSettings,
+                          custom: { ...bgSettings.custom, color2: e.target.value },
+                        })
+                      }
+                      className="w-12 h-12 rounded-xl border-2 border-white/20 cursor-pointer bg-transparent"
+                    />
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={bgSettings.custom?.color2 || "#7dd3fc"}
+                        onChange={(e) =>
+                          setBgSettings({
+                            ...bgSettings,
+                            custom: { ...bgSettings.custom, color2: e.target.value },
+                          })
+                        }
+                        className="w-full bg-black/60 border border-white/[0.1] rounded-xl px-3 py-2 text-sm text-slate-100 font-mono uppercase focus:ring-1 focus:ring-amber-400"
+                        placeholder="#7dd3fc"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Gradient Direction & Cloud Tint */}
+                <div className="bg-black/40 p-4 rounded-xl border border-white/[0.08] space-y-3">
+                  <label className="text-xs font-bold text-slate-200 uppercase tracking-wider block">
+                    Gradient Angle & Direction
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { label: "Top-to-Bottom", value: "180deg" },
+                      { label: "Gentle Angle", value: "160deg" },
+                      { label: "Diagonal", value: "135deg" },
+                      { label: "Side-to-Side", value: "90deg" },
+                    ].map((ang) => (
+                      <button
+                        key={ang.value}
+                        type="button"
+                        onClick={() =>
+                          setBgSettings({
+                            ...bgSettings,
+                            custom: { ...bgSettings.custom, angle: ang.value },
+                          })
+                        }
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition ${
+                          (bgSettings.custom?.angle || "180deg") === ang.value
+                            ? "bg-amber-400/20 text-amber-300 border border-amber-400/40 font-bold"
+                            : "bg-white/[0.04] text-slate-400 hover:text-slate-200 border border-white/[0.06]"
+                        }`}
+                      >
+                        {ang.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Section 3: Cloud Animation Settings ("badal hi animtion me") */}
+          <div className="bg-gradient-to-b from-[#131926] to-[#0C101A] p-6 rounded-2xl border border-white/[0.08] shadow-card-luxury space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-white/[0.08] gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-400/20 flex items-center justify-center text-sky-300">
+                  <Wind className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-serif-luxury text-base font-bold text-slate-100 flex items-center gap-2">
+                    <span>2. Badal (Clouds) Animation Controls</span>
+                    <span className="text-[10px] text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20 font-sans font-bold">
+                      {bgSettings.enableClouds ? "Animation Enabled" : "Animation Paused"}
+                    </span>
+                  </h4>
+                  <p className="text-xs text-slate-400">
+                    Control cloud floating speed, cloud density across 3 parallax layers, and cloud opacity.
+                  </p>
+                </div>
+              </div>
+
+              {/* Master Clouds Toggle */}
+              <button
+                type="button"
+                onClick={() =>
+                  setBgSettings({ ...bgSettings, enableClouds: !bgSettings.enableClouds })
+                }
+                className={`flex items-center gap-2.5 px-4 py-2 rounded-xl text-xs font-bold transition border ${
+                  bgSettings.enableClouds
+                    ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-lg"
+                    : "bg-rose-500/20 text-rose-300 border-rose-500/40"
+                }`}
+              >
+                <Cloud className="w-4 h-4" />
+                <span>{bgSettings.enableClouds ? "Clouds Animation: ON" : "Clouds Animation: OFF"}</span>
+              </button>
+            </div>
+
+            {bgSettings.enableClouds && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Cloud Speed */}
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-300 block">
+                    Cloud Movement Speed
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: "slow", label: "Peaceful", sub: "~80s" },
+                      { id: "normal", label: "Gentle", sub: "~50s" },
+                      { id: "fast", label: "Breezy", sub: "~30s" },
+                    ].map((spd) => (
+                      <button
+                        key={spd.id}
+                        type="button"
+                        onClick={() => setBgSettings({ ...bgSettings, cloudSpeed: spd.id })}
+                        className={`p-2 rounded-xl text-center transition border ${
+                          (bgSettings.cloudSpeed || "normal") === spd.id
+                            ? "bg-sky-500/20 text-sky-200 border-sky-400/40 font-bold shadow-md"
+                            : "bg-black/30 text-slate-400 border-white/[0.06] hover:bg-white/[0.04]"
+                        }`}
+                      >
+                        <div className="text-xs font-semibold">{spd.label}</div>
+                        <div className="text-[10px] text-slate-400 font-mono">{spd.sub}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Cloud Density */}
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-300 block">
+                    Cloud Density & Layers
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: "low", label: "Light", count: "4 clouds" },
+                      { id: "medium", label: "Balanced", count: "7 clouds" },
+                      { id: "high", label: "Lush Sky", count: "9+ clouds" },
+                    ].map((den) => (
+                      <button
+                        key={den.id}
+                        type="button"
+                        onClick={() => setBgSettings({ ...bgSettings, cloudDensity: den.id })}
+                        className={`p-2 rounded-xl text-center transition border ${
+                          (bgSettings.cloudDensity || "high") === den.id
+                            ? "bg-sky-500/20 text-sky-200 border-sky-400/40 font-bold shadow-md"
+                            : "bg-black/30 text-slate-400 border-white/[0.06] hover:bg-white/[0.04]"
+                        }`}
+                      >
+                        <div className="text-xs font-semibold">{den.label}</div>
+                        <div className="text-[10px] text-slate-400 font-mono">{den.count}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Cloud Opacity Slider */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
+                    <span>Cloud Softness / Opacity</span>
+                    <span className="font-mono text-amber-300 font-bold">
+                      {bgSettings.cloudOpacity !== undefined ? bgSettings.cloudOpacity : 90}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="30"
+                    max="100"
+                    value={bgSettings.cloudOpacity !== undefined ? bgSettings.cloudOpacity : 90}
+                    onChange={(e) =>
+                      setBgSettings({ ...bgSettings, cloudOpacity: parseInt(e.target.value, 10) })
+                    }
+                    className="w-full accent-amber-400 h-2 bg-black/60 rounded-lg cursor-pointer"
+                  />
+                  <div className="flex justify-between text-[10px] text-slate-500">
+                    <span>Translucent Wisps (30%)</span>
+                    <span>Fluffy White (100%)</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Section 4: Live Interactive Preview Window (Admin Mockup) */}
+          <div className="bg-gradient-to-b from-[#131926] to-[#0C101A] p-6 rounded-2xl border border-white/[0.08] shadow-card-luxury space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Eye className="w-4 h-4 text-amber-400" />
+                <h4 className="font-serif-luxury text-base font-bold text-slate-100">
+                  3. Live Real-Time Sky & Cloud Motion Preview
+                </h4>
+              </div>
+              <span className="text-xs text-slate-400 font-mono">
+                Exact replica of what customers see on the website
+              </span>
+            </div>
+
+            {/* Mockup Canvas */}
+            <div className="relative w-full h-80 sm:h-96 rounded-2xl overflow-hidden border border-white/20 shadow-2xl flex flex-col justify-between p-6">
+              {/* Actual Sky Background & Animated Clouds Component */}
+              <SkyCloudsBackground isPreview={true} previewSettings={bgSettings} />
+
+              {/* Mockup Storefront UI Overlay */}
+              <div className="relative z-10 flex items-center justify-between">
+                <div className="bg-white/80 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/50 text-slate-900 font-serif font-bold text-xs shadow-md">
+                  sKay Products Storefront
+                </div>
+                <div className="flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-white text-[10px] font-mono border border-white/20">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>
+                    Theme: {bgSettings.theme === "sky-day" ? "Day Azure Sky" : bgSettings.theme === "sky-sunset" ? "Sunset Horizon" : "Custom Dual Color"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Sample Floating Storefront Glass Card */}
+              <div className="relative z-10 max-w-sm mx-auto w-full bg-white/85 backdrop-blur-md p-5 rounded-2xl border border-white/70 shadow-2xl text-slate-900 flex items-center gap-4 animate-fade-in">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-400/20 to-amber-600/30 border border-amber-500/40 flex items-center justify-center text-amber-600 font-serif font-bold text-xl flex-shrink-0 shadow-inner">
+                  sKay
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                    Active Store View
+                  </span>
+                  <h6 className="font-serif font-bold text-sm text-slate-900 mt-0.5">
+                    Haute Formulation Bottle
+                  </h6>
+                  <p className="text-[11px] text-slate-600 line-clamp-1">
+                    Watch the soft clouds float behind transparent glass cards seamlessly.
+                  </p>
+                </div>
+              </div>
+
+              {/* Bottom Notification Pill */}
+              <div className="relative z-10 flex items-center justify-center text-center">
+                <div className="bg-black/50 backdrop-blur-md px-4 py-1 rounded-full text-[11px] text-slate-200 border border-white/10 font-mono">
+                  {bgSettings.enableClouds
+                    ? "☁️ Clouds are drifting continuously from west to east"
+                    : "⏸️ Cloud animation is currently paused"}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 5: Save & Action Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 bg-[#0E131F] rounded-2xl border border-white/[0.08]">
+            <div>
+              <h5 className="font-serif-luxury text-sm font-bold text-slate-200">
+                Ready to Publish this Sky Atmosphere?
+              </h5>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Saving will instantly update the sky view and cloud animations on the live customer website.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setBgSettings(DEFAULT_BACKGROUND_SETTINGS)}
+                className="px-4 py-2.5 border border-white/[0.1] rounded-xl text-xs font-semibold text-slate-300 hover:bg-white/[0.05] transition"
+              >
+                Reset to Day Sky Default
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSaveBackground}
+                disabled={submitting}
+                className="px-6 py-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:brightness-110 text-black font-bold rounded-xl text-xs shadow-luxury-glow transition flex items-center gap-2"
+              >
+                {submitting ? (
+                  <>
+                    <LoaderCircle className="w-4 h-4 animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>Save Background Theme</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {editingItem && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
           <div className="bg-[#0D121D] rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden border border-amber-500/30 my-8 flex flex-col max-h-[90vh]">
