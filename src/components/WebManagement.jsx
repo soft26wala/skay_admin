@@ -1836,26 +1836,359 @@ const WebManagement = () => {
             )}
           </div>
 
-          {/* Section 4: Live Interactive Preview Window (Admin Mockup) */}
+          {/* Section 3: Product Card Styling & Colors (Card Background, Text, and Button Color Editor) */}
+          <div className="bg-gradient-to-b from-[#131926] to-[#0C101A] p-6 rounded-2xl border border-white/[0.08] shadow-card-luxury space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-white/[0.08] gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-400/20 flex items-center justify-center text-amber-300">
+                  <Sparkles className="w-5 h-5 text-amber-400" />
+                </div>
+                <div>
+                  <h4 className="font-serif-luxury text-base font-bold text-gold-gradient flex items-center gap-2">
+                    <span>3. Product Card Styling & Colors</span>
+                    <span className="text-[10px] text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20 font-sans font-bold">
+                      Live Storefront Card Customizer
+                    </span>
+                  </h4>
+                  <p className="text-xs text-slate-400">
+                    Edit card background color, text color, price color, and Add-to-Cart button colors shown on the website.
+                  </p>
+                </div>
+              </div>
+
+              {/* 1-Click Card Color Presets */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs text-slate-400 mr-1">Quick Presets:</span>
+                {[
+                  {
+                    name: "Classic Ivory",
+                    bg: "#ffffff",
+                    opacity: 95,
+                    text: "#1f2937",
+                    btnBg: "#b98822",
+                    btnText: "#ffffff",
+                    price: "#b98822",
+                  },
+                  {
+                    name: "Sky Azure",
+                    bg: "#ffffff",
+                    opacity: 90,
+                    text: "#0f172a",
+                    btnBg: "#0284c7",
+                    btnText: "#ffffff",
+                    price: "#0284c7",
+                  },
+                  {
+                    name: "Dark Luxury",
+                    bg: "#0f172a",
+                    opacity: 95,
+                    text: "#f8fafc",
+                    btnBg: "#f59e0b",
+                    btnText: "#000000",
+                    price: "#38bdf8",
+                  },
+                  {
+                    name: "Sunset Warmth",
+                    bg: "#fff7ed",
+                    opacity: 95,
+                    text: "#431407",
+                    btnBg: "#ea580c",
+                    btnText: "#ffffff",
+                    price: "#c2410c",
+                  },
+                ].map((preset, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() =>
+                      setBgSettings({
+                        ...bgSettings,
+                        cardStyle: {
+                          ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
+                          bg: preset.bg,
+                          bgOpacity: preset.opacity,
+                          textColor: preset.text,
+                          btnBg: preset.btnBg,
+                          btnTextColor: preset.btnText,
+                          priceColor: preset.price,
+                          categoryColor: preset.price,
+                        },
+                      })
+                    }
+                    className="px-2.5 py-1 rounded-lg text-[11px] bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.1] text-slate-300 hover:text-amber-300 transition"
+                  >
+                    {preset.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Color Pickers Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {/* 1. Card Background Color */}
+              <div className="bg-black/40 p-4 rounded-xl border border-white/[0.08] space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                    Card Background Color
+                  </label>
+                  <span className="text-[10px] font-mono text-amber-300 bg-amber-400/10 px-2 py-0.5 rounded">
+                    Bg Color
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={bgSettings.cardStyle?.bg || "#ffffff"}
+                    onChange={(e) =>
+                      setBgSettings({
+                        ...bgSettings,
+                        cardStyle: {
+                          ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
+                          bg: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-11 h-11 rounded-xl border-2 border-white/20 cursor-pointer bg-transparent flex-shrink-0"
+                  />
+                  <input
+                    type="text"
+                    value={bgSettings.cardStyle?.bg || "#ffffff"}
+                    onChange={(e) =>
+                      setBgSettings({
+                        ...bgSettings,
+                        cardStyle: {
+                          ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
+                          bg: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-black/60 border border-white/[0.1] rounded-xl px-3 py-2 text-xs text-slate-100 font-mono uppercase focus:ring-1 focus:ring-amber-400"
+                    placeholder="#ffffff"
+                  />
+                </div>
+                {/* Opacity Slider */}
+                <div className="space-y-1 pt-1">
+                  <div className="flex items-center justify-between text-[11px] text-slate-400">
+                    <span>Card Opacity:</span>
+                    <span className="font-mono text-amber-300">
+                      {bgSettings.cardStyle?.bgOpacity !== undefined ? bgSettings.cardStyle.bgOpacity : 95}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="50"
+                    max="100"
+                    value={bgSettings.cardStyle?.bgOpacity !== undefined ? bgSettings.cardStyle.bgOpacity : 95}
+                    onChange={(e) =>
+                      setBgSettings({
+                        ...bgSettings,
+                        cardStyle: {
+                          ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
+                          bgOpacity: parseInt(e.target.value, 10),
+                        },
+                      })
+                    }
+                    className="w-full accent-amber-400 h-1.5 bg-black/60 rounded-lg cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              {/* 2. Card Text & Title Color */}
+              <div className="bg-black/40 p-4 rounded-xl border border-white/[0.08] space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                    Card Text & Title Color
+                  </label>
+                  <span className="text-[10px] font-mono text-sky-300 bg-sky-400/10 px-2 py-0.5 rounded">
+                    Text Color
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={bgSettings.cardStyle?.textColor || "#1f2937"}
+                    onChange={(e) =>
+                      setBgSettings({
+                        ...bgSettings,
+                        cardStyle: {
+                          ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
+                          textColor: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-11 h-11 rounded-xl border-2 border-white/20 cursor-pointer bg-transparent flex-shrink-0"
+                  />
+                  <input
+                    type="text"
+                    value={bgSettings.cardStyle?.textColor || "#1f2937"}
+                    onChange={(e) =>
+                      setBgSettings({
+                        ...bgSettings,
+                        cardStyle: {
+                          ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
+                          textColor: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-black/60 border border-white/[0.1] rounded-xl px-3 py-2 text-xs text-slate-100 font-mono uppercase focus:ring-1 focus:ring-amber-400"
+                    placeholder="#1f2937"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-500">
+                  Applied to product titles, reviews, and descriptions.
+                </p>
+              </div>
+
+              {/* 3. Card Button Background Color */}
+              <div className="bg-black/40 p-4 rounded-xl border border-white/[0.08] space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                    Button Background
+                  </label>
+                  <span className="text-[10px] font-mono text-emerald-300 bg-emerald-400/10 px-2 py-0.5 rounded">
+                    Btn Color
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={bgSettings.cardStyle?.btnBg || "#b98822"}
+                    onChange={(e) =>
+                      setBgSettings({
+                        ...bgSettings,
+                        cardStyle: {
+                          ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
+                          btnBg: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-11 h-11 rounded-xl border-2 border-white/20 cursor-pointer bg-transparent flex-shrink-0"
+                  />
+                  <input
+                    type="text"
+                    value={bgSettings.cardStyle?.btnBg || "#b98822"}
+                    onChange={(e) =>
+                      setBgSettings({
+                        ...bgSettings,
+                        cardStyle: {
+                          ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
+                          btnBg: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-black/60 border border-white/[0.1] rounded-xl px-3 py-2 text-xs text-slate-100 font-mono uppercase focus:ring-1 focus:ring-amber-400"
+                    placeholder="#b98822"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-500">
+                  Applied to "ADD TO CART" and quick action buttons.
+                </p>
+              </div>
+
+              {/* 4. Button Text & Price Colors */}
+              <div className="bg-black/40 p-4 rounded-xl border border-white/[0.08] space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                    Button Text & Price Color
+                  </label>
+                  <span className="text-[10px] font-mono text-purple-300 bg-purple-400/10 px-2 py-0.5 rounded">
+                    Accents
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block mb-1">Btn Text:</span>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="color"
+                        value={bgSettings.cardStyle?.btnTextColor || "#ffffff"}
+                        onChange={(e) =>
+                          setBgSettings({
+                            ...bgSettings,
+                            cardStyle: {
+                              ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
+                              btnTextColor: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-8 h-8 rounded-lg border border-white/20 cursor-pointer bg-transparent flex-shrink-0"
+                      />
+                      <input
+                        type="text"
+                        value={bgSettings.cardStyle?.btnTextColor || "#ffffff"}
+                        onChange={(e) =>
+                          setBgSettings({
+                            ...bgSettings,
+                            cardStyle: {
+                              ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
+                              btnTextColor: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-full bg-black/60 border border-white/[0.1] rounded-lg px-2 py-1 text-[11px] text-slate-100 font-mono uppercase"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block mb-1">Price Color:</span>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="color"
+                        value={bgSettings.cardStyle?.priceColor || "#b98822"}
+                        onChange={(e) =>
+                          setBgSettings({
+                            ...bgSettings,
+                            cardStyle: {
+                              ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
+                              priceColor: e.target.value,
+                              categoryColor: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-8 h-8 rounded-lg border border-white/20 cursor-pointer bg-transparent flex-shrink-0"
+                      />
+                      <input
+                        type="text"
+                        value={bgSettings.cardStyle?.priceColor || "#b98822"}
+                        onChange={(e) =>
+                          setBgSettings({
+                            ...bgSettings,
+                            cardStyle: {
+                              ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
+                              priceColor: e.target.value,
+                              categoryColor: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-full bg-black/60 border border-white/[0.1] rounded-lg px-2 py-1 text-[11px] text-slate-100 font-mono uppercase"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 4: Live Interactive Preview Window (Admin Mockup with Product Card) */}
           <div className="bg-gradient-to-b from-[#131926] to-[#0C101A] p-6 rounded-2xl border border-white/[0.08] shadow-card-luxury space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Eye className="w-4 h-4 text-amber-400" />
                 <h4 className="font-serif-luxury text-base font-bold text-slate-100">
-                  3. Live Real-Time Sky & Cloud Motion Preview
+                  4. Live Real-Time Sky Background & Product Card Preview
                 </h4>
               </div>
               <span className="text-xs text-slate-400 font-mono">
-                Exact replica of what customers see on the website
+                Changes to Sky and Card Colors appear here instantly
               </span>
             </div>
 
             {/* Mockup Canvas */}
-            <div className="relative w-full h-80 sm:h-96 rounded-2xl overflow-hidden border border-white/20 shadow-2xl flex flex-col justify-between p-6">
+            <div className="relative w-full min-h-[440px] rounded-2xl overflow-hidden border border-white/20 shadow-2xl flex flex-col justify-between p-6">
               {/* Actual Sky Background & Animated Clouds Component */}
               <SkyCloudsBackground isPreview={true} previewSettings={bgSettings} />
 
-              {/* Mockup Storefront UI Overlay */}
+              {/* Mockup Storefront UI Overlay Header */}
               <div className="relative z-10 flex items-center justify-between">
                 <div className="bg-white/80 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/50 text-slate-900 font-serif font-bold text-xs shadow-md">
                   sKay Products Storefront
@@ -1868,21 +2201,80 @@ const WebManagement = () => {
                 </div>
               </div>
 
-              {/* Sample Floating Storefront Glass Card */}
-              <div className="relative z-10 max-w-sm mx-auto w-full bg-white/85 backdrop-blur-md p-5 rounded-2xl border border-white/70 shadow-2xl text-slate-900 flex items-center gap-4 animate-fade-in">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-400/20 to-amber-600/30 border border-amber-500/40 flex items-center justify-center text-amber-600 font-serif font-bold text-xl flex-shrink-0 shadow-inner">
-                  sKay
-                </div>
-                <div>
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                    Active Store View
+              {/* Sample Floating Storefront Product Card (Real-Time Live Styling Reflection) */}
+              <div
+                className="relative z-10 max-w-xs mx-auto w-full p-5 rounded-2xl border transition-all duration-300 shadow-2xl flex flex-col justify-between my-4 animate-fade-in"
+                style={{
+                  backgroundColor: bgSettings.cardStyle?.bg || "#ffffff",
+                  opacity: (bgSettings.cardStyle?.bgOpacity !== undefined ? bgSettings.cardStyle.bgOpacity : 95) / 100,
+                  borderColor: bgSettings.cardStyle?.borderColor || "rgba(220, 210, 190, 0.7)",
+                  color: bgSettings.cardStyle?.textColor || "#1f2937",
+                }}
+              >
+                {/* Product Image Area */}
+                <div className="relative overflow-hidden rounded-xl mb-3 aspect-square bg-slate-100/70 border border-black/5 flex items-center justify-center p-4">
+                  <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-sky-400/20 via-sky-500/30 to-amber-500/20 border border-sky-400/40 flex flex-col items-center justify-center text-center p-2 shadow-inner">
+                    <span className="font-serif font-black text-xl text-sky-800 tracking-wider">sKay</span>
+                    <span className="text-[8px] font-bold uppercase tracking-widest text-slate-600">PRODUCTS</span>
+                  </div>
+                  <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-amber-400 text-black text-[9px] font-black uppercase tracking-wider shadow-sm">
+                    NEW
                   </span>
-                  <h6 className="font-serif font-bold text-sm text-slate-900 mt-0.5">
-                    Haute Formulation Bottle
+                  <div
+                    className="absolute bottom-2 right-2 p-2 rounded-full shadow-md text-xs"
+                    style={{
+                      backgroundColor: bgSettings.cardStyle?.btnBg || "#b98822",
+                      color: bgSettings.cardStyle?.btnTextColor || "#ffffff",
+                    }}
+                  >
+                    <ShoppingBag className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+
+                {/* Info */}
+                <div className="space-y-1">
+                  <span
+                    className="text-[10px] font-semibold uppercase tracking-[0.15em] block"
+                    style={{ color: bgSettings.cardStyle?.priceColor || "#b98822" }}
+                  >
+                    SKINCARE & SERUMS
+                  </span>
+                  <h6
+                    className="font-serif font-bold text-sm line-clamp-1"
+                    style={{ color: bgSettings.cardStyle?.textColor || "#1f2937" }}
+                  >
+                    sKay Pure Botanical Formulation
                   </h6>
-                  <p className="text-[11px] text-slate-600 line-clamp-1">
-                    Watch the soft clouds float behind transparent glass cards seamlessly.
-                  </p>
+                  <div className="flex items-center space-x-1 text-amber-400 text-xs py-0.5">
+                    <span>★★★★★</span>
+                    <span className="text-[10px] text-slate-400">(24)</span>
+                  </div>
+                  <div className="flex items-baseline justify-between pt-1">
+                    <span
+                      className="font-serif font-bold text-base"
+                      style={{ color: bgSettings.cardStyle?.priceColor || "#b98822" }}
+                    >
+                      $21.00 CAD
+                    </span>
+                    <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                      IN STOCK
+                    </span>
+                  </div>
+                </div>
+
+                {/* Add to Cart Button */}
+                <div className="pt-3 mt-3 border-t border-black/10">
+                  <button
+                    type="button"
+                    className="w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center space-x-1.5 shadow-sm transition hover:brightness-105"
+                    style={{
+                      backgroundColor: bgSettings.cardStyle?.btnBg || "#b98822",
+                      color: bgSettings.cardStyle?.btnTextColor || "#ffffff",
+                    }}
+                  >
+                    <ShoppingBag className="w-3.5 h-3.5" />
+                    <span>ADD TO CART</span>
+                  </button>
                 </div>
               </div>
 
@@ -1890,12 +2282,13 @@ const WebManagement = () => {
               <div className="relative z-10 flex items-center justify-center text-center">
                 <div className="bg-black/50 backdrop-blur-md px-4 py-1 rounded-full text-[11px] text-slate-200 border border-white/10 font-mono">
                   {bgSettings.enableClouds
-                    ? "☁️ Clouds are drifting continuously from west to east"
-                    : "⏸️ Cloud animation is currently paused"}
+                    ? "☁️ Live Clouds floating • Card colors updating in real time"
+                    : "⏸️ Cloud animation paused"}
                 </div>
               </div>
             </div>
           </div>
+
 
           {/* Section 5: Save & Action Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 bg-[#0E131F] rounded-2xl border border-white/[0.08]">

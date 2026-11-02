@@ -35,6 +35,16 @@ export const DEFAULT_BACKGROUND_SETTINGS = {
     angle: "180deg",
     cloudColor: "#ffffff",
   },
+  cardStyle: {
+    bg: "#ffffff",
+    bgOpacity: 95,
+    textColor: "#1f2937",
+    categoryColor: "#b98822",
+    priceColor: "#b98822",
+    btnBg: "#b98822",
+    btnTextColor: "#ffffff",
+    borderColor: "rgba(220, 210, 190, 0.7)",
+  },
 };
 
 // Realistic Cloud SVG Component with soft gradients and volumetric shading
