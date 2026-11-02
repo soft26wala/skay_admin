@@ -22,6 +22,7 @@ import {
   Wind,
   Sliders,
   Eye,
+  ShoppingBag,
 } from "lucide-react";
 import { axiosInstance } from "../lib/axios";
 import { toast } from "react-toastify";
@@ -163,10 +164,43 @@ const WebManagement = () => {
   const [bgSettings, setBgSettings] = useState(() => {
     try {
       const saved = localStorage.getItem("site_background_settings");
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          ...DEFAULT_BACKGROUND_SETTINGS,
+          ...parsed,
+          preset1: { ...DEFAULT_BACKGROUND_SETTINGS.preset1, ...(parsed.preset1 || {}) },
+          preset2: { ...DEFAULT_BACKGROUND_SETTINGS.preset2, ...(parsed.preset2 || {}) },
+          custom: { ...DEFAULT_BACKGROUND_SETTINGS.custom, ...(parsed.custom || {}) },
+          cardStyle: { ...DEFAULT_BACKGROUND_SETTINGS.cardStyle, ...(parsed.cardStyle || {}) },
+        };
+      }
     } catch (e) {}
     return DEFAULT_BACKGROUND_SETTINGS;
   });
+
+  const updateCustomSettings = (updates) => {
+    setBgSettings((prev) => ({
+      ...prev,
+      theme: "custom",
+      custom: {
+        ...DEFAULT_BACKGROUND_SETTINGS.custom,
+        ...(prev.custom || {}),
+        ...updates,
+      },
+    }));
+  };
+
+  const updateCardStyle = (updates) => {
+    setBgSettings((prev) => ({
+      ...prev,
+      cardStyle: {
+        ...DEFAULT_BACKGROUND_SETTINGS.cardStyle,
+        ...(prev.cardStyle || {}),
+        ...updates,
+      },
+    }));
+  };
 
   // Form toggles
   const [showAddForm, setShowAddForm] = useState(false);
@@ -222,8 +256,16 @@ const WebManagement = () => {
       if (whyRes?.data?.features) setWhyChooseFeatures(whyRes.data.features);
       if (annRes?.data?.announcement) setAnnouncementText(annRes.data.announcement);
       if (bgRes?.data?.background) {
-        setBgSettings(bgRes.data.background);
-        localStorage.setItem("site_background_settings", JSON.stringify(bgRes.data.background));
+        const bgData = {
+          ...DEFAULT_BACKGROUND_SETTINGS,
+          ...bgRes.data.background,
+          preset1: { ...DEFAULT_BACKGROUND_SETTINGS.preset1, ...(bgRes.data.background.preset1 || {}) },
+          preset2: { ...DEFAULT_BACKGROUND_SETTINGS.preset2, ...(bgRes.data.background.preset2 || {}) },
+          custom: { ...DEFAULT_BACKGROUND_SETTINGS.custom, ...(bgRes.data.background.custom || {}) },
+          cardStyle: { ...DEFAULT_BACKGROUND_SETTINGS.cardStyle, ...(bgRes.data.background.cardStyle || {}) },
+        };
+        setBgSettings(bgData);
+        localStorage.setItem("site_background_settings", JSON.stringify(bgData));
       }
     } catch (err) {
       console.error("Error fetching web data:", err);
@@ -1491,7 +1533,16 @@ const WebManagement = () => {
 
               {/* Option 3: Custom Dual Color Sky */}
               <div
-                onClick={() => setBgSettings({ ...bgSettings, theme: "custom" })}
+                onClick={() =>
+                  setBgSettings((prev) => ({
+                    ...prev,
+                    theme: "custom",
+                    custom: {
+                      ...DEFAULT_BACKGROUND_SETTINGS.custom,
+                      ...(prev.custom || {}),
+                    },
+                  }))
+                }
                 className={`relative rounded-2xl p-5 cursor-pointer transition-all duration-300 border flex flex-col justify-between overflow-hidden group ${
                   bgSettings.theme === "custom"
                     ? "bg-[#141824] border-amber-400 shadow-[0_0_25px_rgba(251,191,36,0.2)] ring-1 ring-amber-400"
@@ -1561,7 +1612,7 @@ const WebManagement = () => {
                       Custom Dual Color Sky Editor
                     </h4>
                     <p className="text-xs text-slate-400">
-                      Fine-tune Color 1 (Sky Zenith), Color 2 (Horizon Light), and gradient angle.
+                      Fine-tune Color 1 (Sky Zenith), Color 2 (Horizon Light), Cloud Tint, and gradient angle.
                     </p>
                   </div>
                 </div>
@@ -1570,23 +1621,20 @@ const WebManagement = () => {
                 <div className="hidden lg:flex items-center gap-2">
                   <span className="text-xs text-slate-400">Quick Themes:</span>
                   {[
-                    { name: "Deep Ocean", c1: "#0369a1", c2: "#38bdf8", angle: "180deg" },
-                    { name: "Aurora Sky", c1: "#065f46", c2: "#34d399", angle: "150deg" },
-                    { name: "Rose Dusk", c1: "#9f1239", c2: "#fda4af", angle: "160deg" },
-                    { name: "Royal Midnight", c1: "#312e81", c2: "#818cf8", angle: "180deg" },
+                    { name: "Deep Ocean", c1: "#0369a1", c2: "#38bdf8", angle: "180deg", cloud: "#ffffff" },
+                    { name: "Aurora Sky", c1: "#065f46", c2: "#34d399", angle: "150deg", cloud: "#ecfdf5" },
+                    { name: "Rose Dusk", c1: "#9f1239", c2: "#fda4af", angle: "160deg", cloud: "#fff1f2" },
+                    { name: "Royal Midnight", c1: "#312e81", c2: "#818cf8", angle: "180deg", cloud: "#e0e7ff" },
                   ].map((preset, idx) => (
                     <button
                       key={idx}
                       type="button"
                       onClick={() =>
-                        setBgSettings({
-                          ...bgSettings,
-                          custom: {
-                            ...bgSettings.custom,
-                            color1: preset.c1,
-                            color2: preset.c2,
-                            angle: preset.angle,
-                          },
+                        updateCustomSettings({
+                          color1: preset.c1,
+                          color2: preset.c2,
+                          angle: preset.angle,
+                          cloudColor: preset.cloud,
                         })
                       }
                       className="px-2.5 py-1 rounded-lg text-[11px] bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.1] text-slate-300 transition"
@@ -1597,7 +1645,7 @@ const WebManagement = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 {/* Color 1: Sky Zenith */}
                 <div className="bg-black/40 p-4 rounded-xl border border-white/[0.08] space-y-3">
                   <div className="flex items-center justify-between">
@@ -1613,25 +1661,15 @@ const WebManagement = () => {
                     <input
                       type="color"
                       value={bgSettings.custom?.color1 || "#0284c7"}
-                      onChange={(e) =>
-                        setBgSettings({
-                          ...bgSettings,
-                          custom: { ...bgSettings.custom, color1: e.target.value },
-                        })
-                      }
-                      className="w-12 h-12 rounded-xl border-2 border-white/20 cursor-pointer bg-transparent"
+                      onChange={(e) => updateCustomSettings({ color1: e.target.value })}
+                      className="w-11 h-11 rounded-xl border-2 border-white/20 cursor-pointer bg-transparent flex-shrink-0"
                     />
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <input
                         type="text"
                         value={bgSettings.custom?.color1 || "#0284c7"}
-                        onChange={(e) =>
-                          setBgSettings({
-                            ...bgSettings,
-                            custom: { ...bgSettings.custom, color1: e.target.value },
-                          })
-                        }
-                        className="w-full bg-black/60 border border-white/[0.1] rounded-xl px-3 py-2 text-sm text-slate-100 font-mono uppercase focus:ring-1 focus:ring-amber-400"
+                        onChange={(e) => updateCustomSettings({ color1: e.target.value })}
+                        className="w-full bg-black/60 border border-white/[0.1] rounded-xl px-3 py-2 text-xs text-slate-100 font-mono uppercase focus:ring-1 focus:ring-amber-400"
                         placeholder="#0284c7"
                       />
                     </div>
@@ -1642,7 +1680,7 @@ const WebManagement = () => {
                 <div className="bg-black/40 p-4 rounded-xl border border-white/[0.08] space-y-3">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-slate-200 uppercase tracking-wider">
-                      Color 2: Horizon Glow (Bottom)
+                      Color 2: Horizon Glow
                     </label>
                     <span className="text-[10px] font-mono text-sky-300 bg-sky-400/10 px-2 py-0.5 rounded">
                       Secondary
@@ -1653,35 +1691,55 @@ const WebManagement = () => {
                     <input
                       type="color"
                       value={bgSettings.custom?.color2 || "#7dd3fc"}
-                      onChange={(e) =>
-                        setBgSettings({
-                          ...bgSettings,
-                          custom: { ...bgSettings.custom, color2: e.target.value },
-                        })
-                      }
-                      className="w-12 h-12 rounded-xl border-2 border-white/20 cursor-pointer bg-transparent"
+                      onChange={(e) => updateCustomSettings({ color2: e.target.value })}
+                      className="w-11 h-11 rounded-xl border-2 border-white/20 cursor-pointer bg-transparent flex-shrink-0"
                     />
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <input
                         type="text"
                         value={bgSettings.custom?.color2 || "#7dd3fc"}
-                        onChange={(e) =>
-                          setBgSettings({
-                            ...bgSettings,
-                            custom: { ...bgSettings.custom, color2: e.target.value },
-                          })
-                        }
-                        className="w-full bg-black/60 border border-white/[0.1] rounded-xl px-3 py-2 text-sm text-slate-100 font-mono uppercase focus:ring-1 focus:ring-amber-400"
+                        onChange={(e) => updateCustomSettings({ color2: e.target.value })}
+                        className="w-full bg-black/60 border border-white/[0.1] rounded-xl px-3 py-2 text-xs text-slate-100 font-mono uppercase focus:ring-1 focus:ring-amber-400"
                         placeholder="#7dd3fc"
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* Gradient Direction & Cloud Tint */}
+                {/* Color 3: Cloud Tint */}
+                <div className="bg-black/40 p-4 rounded-xl border border-white/[0.08] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                      Color 3: Cloud Tint (Badal)
+                    </label>
+                    <span className="text-[10px] font-mono text-purple-300 bg-purple-400/10 px-2 py-0.5 rounded">
+                      Clouds
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={bgSettings.custom?.cloudColor || "#ffffff"}
+                      onChange={(e) => updateCustomSettings({ cloudColor: e.target.value })}
+                      className="w-11 h-11 rounded-xl border-2 border-white/20 cursor-pointer bg-transparent flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <input
+                        type="text"
+                        value={bgSettings.custom?.cloudColor || "#ffffff"}
+                        onChange={(e) => updateCustomSettings({ cloudColor: e.target.value })}
+                        className="w-full bg-black/60 border border-white/[0.1] rounded-xl px-3 py-2 text-xs text-slate-100 font-mono uppercase focus:ring-1 focus:ring-amber-400"
+                        placeholder="#ffffff"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Gradient Direction */}
                 <div className="bg-black/40 p-4 rounded-xl border border-white/[0.08] space-y-3">
                   <label className="text-xs font-bold text-slate-200 uppercase tracking-wider block">
-                    Gradient Angle & Direction
+                    Gradient Angle
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     {[
@@ -1693,13 +1751,8 @@ const WebManagement = () => {
                       <button
                         key={ang.value}
                         type="button"
-                        onClick={() =>
-                          setBgSettings({
-                            ...bgSettings,
-                            custom: { ...bgSettings.custom, angle: ang.value },
-                          })
-                        }
-                        className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition ${
+                        onClick={() => updateCustomSettings({ angle: ang.value })}
+                        className={`px-2 py-1.5 rounded-lg text-xs font-medium transition ${
                           (bgSettings.custom?.angle || "180deg") === ang.value
                             ? "bg-amber-400/20 text-amber-300 border border-amber-400/40 font-bold"
                             : "bg-white/[0.04] text-slate-400 hover:text-slate-200 border border-white/[0.06]"
@@ -1901,18 +1954,14 @@ const WebManagement = () => {
                     key={idx}
                     type="button"
                     onClick={() =>
-                      setBgSettings({
-                        ...bgSettings,
-                        cardStyle: {
-                          ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
-                          bg: preset.bg,
-                          bgOpacity: preset.opacity,
-                          textColor: preset.text,
-                          btnBg: preset.btnBg,
-                          btnTextColor: preset.btnText,
-                          priceColor: preset.price,
-                          categoryColor: preset.price,
-                        },
+                      updateCardStyle({
+                        bg: preset.bg,
+                        bgOpacity: preset.opacity,
+                        textColor: preset.text,
+                        btnBg: preset.btnBg,
+                        btnTextColor: preset.btnText,
+                        priceColor: preset.price,
+                        categoryColor: preset.price,
                       })
                     }
                     className="px-2.5 py-1 rounded-lg text-[11px] bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.1] text-slate-300 hover:text-amber-300 transition"
@@ -1939,29 +1988,13 @@ const WebManagement = () => {
                   <input
                     type="color"
                     value={bgSettings.cardStyle?.bg || "#ffffff"}
-                    onChange={(e) =>
-                      setBgSettings({
-                        ...bgSettings,
-                        cardStyle: {
-                          ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
-                          bg: e.target.value,
-                        },
-                      })
-                    }
+                    onChange={(e) => updateCardStyle({ bg: e.target.value })}
                     className="w-11 h-11 rounded-xl border-2 border-white/20 cursor-pointer bg-transparent flex-shrink-0"
                   />
                   <input
                     type="text"
                     value={bgSettings.cardStyle?.bg || "#ffffff"}
-                    onChange={(e) =>
-                      setBgSettings({
-                        ...bgSettings,
-                        cardStyle: {
-                          ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
-                          bg: e.target.value,
-                        },
-                      })
-                    }
+                    onChange={(e) => updateCardStyle({ bg: e.target.value })}
                     className="w-full bg-black/60 border border-white/[0.1] rounded-xl px-3 py-2 text-xs text-slate-100 font-mono uppercase focus:ring-1 focus:ring-amber-400"
                     placeholder="#ffffff"
                   />
@@ -1979,15 +2012,7 @@ const WebManagement = () => {
                     min="50"
                     max="100"
                     value={bgSettings.cardStyle?.bgOpacity !== undefined ? bgSettings.cardStyle.bgOpacity : 95}
-                    onChange={(e) =>
-                      setBgSettings({
-                        ...bgSettings,
-                        cardStyle: {
-                          ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
-                          bgOpacity: parseInt(e.target.value, 10),
-                        },
-                      })
-                    }
+                    onChange={(e) => updateCardStyle({ bgOpacity: parseInt(e.target.value, 10) })}
                     className="w-full accent-amber-400 h-1.5 bg-black/60 rounded-lg cursor-pointer"
                   />
                 </div>
@@ -2007,29 +2032,13 @@ const WebManagement = () => {
                   <input
                     type="color"
                     value={bgSettings.cardStyle?.textColor || "#1f2937"}
-                    onChange={(e) =>
-                      setBgSettings({
-                        ...bgSettings,
-                        cardStyle: {
-                          ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
-                          textColor: e.target.value,
-                        },
-                      })
-                    }
+                    onChange={(e) => updateCardStyle({ textColor: e.target.value })}
                     className="w-11 h-11 rounded-xl border-2 border-white/20 cursor-pointer bg-transparent flex-shrink-0"
                   />
                   <input
                     type="text"
                     value={bgSettings.cardStyle?.textColor || "#1f2937"}
-                    onChange={(e) =>
-                      setBgSettings({
-                        ...bgSettings,
-                        cardStyle: {
-                          ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
-                          textColor: e.target.value,
-                        },
-                      })
-                    }
+                    onChange={(e) => updateCardStyle({ textColor: e.target.value })}
                     className="w-full bg-black/60 border border-white/[0.1] rounded-xl px-3 py-2 text-xs text-slate-100 font-mono uppercase focus:ring-1 focus:ring-amber-400"
                     placeholder="#1f2937"
                   />
@@ -2053,29 +2062,13 @@ const WebManagement = () => {
                   <input
                     type="color"
                     value={bgSettings.cardStyle?.btnBg || "#b98822"}
-                    onChange={(e) =>
-                      setBgSettings({
-                        ...bgSettings,
-                        cardStyle: {
-                          ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
-                          btnBg: e.target.value,
-                        },
-                      })
-                    }
+                    onChange={(e) => updateCardStyle({ btnBg: e.target.value })}
                     className="w-11 h-11 rounded-xl border-2 border-white/20 cursor-pointer bg-transparent flex-shrink-0"
                   />
                   <input
                     type="text"
                     value={bgSettings.cardStyle?.btnBg || "#b98822"}
-                    onChange={(e) =>
-                      setBgSettings({
-                        ...bgSettings,
-                        cardStyle: {
-                          ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
-                          btnBg: e.target.value,
-                        },
-                      })
-                    }
+                    onChange={(e) => updateCardStyle({ btnBg: e.target.value })}
                     className="w-full bg-black/60 border border-white/[0.1] rounded-xl px-3 py-2 text-xs text-slate-100 font-mono uppercase focus:ring-1 focus:ring-amber-400"
                     placeholder="#b98822"
                   />
@@ -2102,29 +2095,13 @@ const WebManagement = () => {
                       <input
                         type="color"
                         value={bgSettings.cardStyle?.btnTextColor || "#ffffff"}
-                        onChange={(e) =>
-                          setBgSettings({
-                            ...bgSettings,
-                            cardStyle: {
-                              ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
-                              btnTextColor: e.target.value,
-                            },
-                          })
-                        }
+                        onChange={(e) => updateCardStyle({ btnTextColor: e.target.value })}
                         className="w-8 h-8 rounded-lg border border-white/20 cursor-pointer bg-transparent flex-shrink-0"
                       />
                       <input
                         type="text"
                         value={bgSettings.cardStyle?.btnTextColor || "#ffffff"}
-                        onChange={(e) =>
-                          setBgSettings({
-                            ...bgSettings,
-                            cardStyle: {
-                              ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
-                              btnTextColor: e.target.value,
-                            },
-                          })
-                        }
+                        onChange={(e) => updateCardStyle({ btnTextColor: e.target.value })}
                         className="w-full bg-black/60 border border-white/[0.1] rounded-lg px-2 py-1 text-[11px] text-slate-100 font-mono uppercase"
                       />
                     </div>
@@ -2136,13 +2113,9 @@ const WebManagement = () => {
                         type="color"
                         value={bgSettings.cardStyle?.priceColor || "#b98822"}
                         onChange={(e) =>
-                          setBgSettings({
-                            ...bgSettings,
-                            cardStyle: {
-                              ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
-                              priceColor: e.target.value,
-                              categoryColor: e.target.value,
-                            },
+                          updateCardStyle({
+                            priceColor: e.target.value,
+                            categoryColor: e.target.value,
                           })
                         }
                         className="w-8 h-8 rounded-lg border border-white/20 cursor-pointer bg-transparent flex-shrink-0"
@@ -2151,13 +2124,9 @@ const WebManagement = () => {
                         type="text"
                         value={bgSettings.cardStyle?.priceColor || "#b98822"}
                         onChange={(e) =>
-                          setBgSettings({
-                            ...bgSettings,
-                            cardStyle: {
-                              ...(bgSettings.cardStyle || DEFAULT_BACKGROUND_SETTINGS.cardStyle),
-                              priceColor: e.target.value,
-                              categoryColor: e.target.value,
-                            },
+                          updateCardStyle({
+                            priceColor: e.target.value,
+                            categoryColor: e.target.value,
                           })
                         }
                         className="w-full bg-black/60 border border-white/[0.1] rounded-lg px-2 py-1 text-[11px] text-slate-100 font-mono uppercase"
