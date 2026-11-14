@@ -35,13 +35,11 @@ const Login = () => {
       <div className="relative z-10 bg-gradient-to-b from-[#131926]/95 via-[#0E131E]/95 to-[#0A0D14]/95 border border-amber-400/30 rounded-3xl p-8 sm:p-10 shadow-card-luxury max-w-md w-full backdrop-blur-xl text-slate-100">
         {/* Atelier Crest / Logo */}
         <div className="text-center mb-8">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 p-[1px] shadow-glow-gold mb-3 flex items-center justify-center">
-            <div className="w-full h-full bg-[#0D111A] rounded-2xl flex items-center justify-center">
-              <span className="font-serif font-black text-amber-300 text-xl tracking-tighter">
-                SP
-              </span>
-            </div>
-          </div>
+          <img
+            src="/img/logo/skay-logo.png"
+            alt="sKay Products"
+            className="h-16 w-auto mx-auto object-contain mb-3 drop-shadow-md"
+          />
 
           <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-semibold bg-amber-400/10 text-amber-300 border border-amber-400/25 mb-1.5">
             <Sparkles className="w-3 h-3" />

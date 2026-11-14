@@ -79,11 +79,13 @@ const SideBar = () => {
           <div className="pb-4 border-b border-white/[0.08]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400/20 via-amber-500/10 to-transparent border border-amber-400/40 flex items-center justify-center shadow-luxury-glow">
-                  <Sparkles className="w-5 h-5 text-amber-300" />
-                </div>
+                <img
+                  src="/img/logo/skay-logo.png"
+                  alt="sKay Products"
+                  className="h-9 w-auto object-contain"
+                />
                 <div>
-                  <h2 className="font-serif-luxury text-lg font-bold tracking-wide text-gold-gradient">
+                  <h2 className="font-serif-luxury text-base font-bold tracking-wide text-gold-gradient">
                     SKAY PRODUCTS
                   </h2>
                   <p className="text-[10px] uppercase tracking-[0.22em] text-amber-400/70 font-medium">
