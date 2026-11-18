@@ -97,16 +97,20 @@ export const login = (data) => async (dispatch) => {
   try {
     await axiosInstance.post("/auth/login", data).then((res) => {
       if (res.data.user.role === "Admin") {
+        if (res.data.token) {
+          localStorage.setItem("admin_token", res.data.token);
+          localStorage.setItem("token", res.data.token);
+        }
         dispatch(authSlice.actions.loginSuccess(res.data.user));
         toast.success(res.data.message);
       } else {
         dispatch(authSlice.actions.loginFailed());
-        toast.error(res.data.message);
+        toast.error(res.data.message || "Unauthorized access.");
       }
     });
   } catch (error) {
     dispatch(authSlice.actions.loginFailed());
-    toast.error(error.response.data.message || "Login failed.");
+    toast.error(error.response?.data?.message || "Login failed.");
   }
 };
 
@@ -117,9 +121,12 @@ export const getUser = () => async (dispatch) => {
       dispatch(authSlice.actions.getUserSuccess(res.data.user));
     });
   } catch (error) {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("admin_token");
+      localStorage.removeItem("token");
+    }
     dispatch(authSlice.actions.getUserFailed());
     console.error(error);
-    
   }
 };
 
@@ -127,13 +134,17 @@ export const logout = () => async (dispatch) => {
   dispatch(authSlice.actions.logoutRequest());
   try {
     await axiosInstance.get("/auth/logout").then((res) => {
+      localStorage.removeItem("admin_token");
+      localStorage.removeItem("token");
       dispatch(authSlice.actions.logoutSuccess());
       toast.success(res.data.message);
       dispatch(authSlice.actions.resetAuthSlice());
     });
   } catch (error) {
+    localStorage.removeItem("admin_token");
+    localStorage.removeItem("token");
     dispatch(authSlice.actions.getUserFailed());
-    toast.error(error.response.data.message || "Logout failed.");
+    toast.error(error.response?.data?.message || "Logout failed.");
     dispatch(authSlice.actions.resetAuthSlice());
   }
 };
@@ -150,7 +161,7 @@ export const forgotPassword = (number) => async (dispatch) => {
   } catch (error) {
     dispatch(authSlice.actions.forgotPasswordFailed());
     toast.error(
-      error.response.data.message || "Cannot request for reset password."
+      error.response?.data?.message || "Cannot request for reset password."
     );
   }
 };
@@ -161,12 +172,16 @@ export const resetPassword = (newData, token) => async (dispatch) => {
     await axiosInstance
       .put(`/auth/password/reset/${token}`, newData)
       .then((res) => {
+        if (res.data.token) {
+          localStorage.setItem("admin_token", res.data.token);
+          localStorage.setItem("token", res.data.token);
+        }
         dispatch(authSlice.actions.resetPasswordSuccess(res.data.user));
         toast.success(res.data.message);
       });
   } catch (error) {
     dispatch(authSlice.actions.resetPasswordFailed());
-    toast.error(error.response.data.message || "Failed to reset password.");
+    toast.error(error.response?.data?.message || "Failed to reset password.");
   }
 };
 
