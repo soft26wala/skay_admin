@@ -556,14 +556,12 @@ const WebManagement = () => {
     setSubmitting(true);
     try {
       const res = await axiosInstance.post("/web/background", bgSettings);
-      toast.success(res?.data?.message || "Sky background & clouds saved successfully!");
+      toast.success(res?.data?.message || "Sky background & clouds saved permanently!");
       localStorage.setItem("site_background_settings", JSON.stringify(bgSettings));
       window.dispatchEvent(new CustomEvent("site-background-change", { detail: bgSettings }));
     } catch (err) {
-      console.warn("API save background notice:", err);
-      localStorage.setItem("site_background_settings", JSON.stringify(bgSettings));
-      window.dispatchEvent(new CustomEvent("site-background-change", { detail: bgSettings }));
-      toast.success("Sky background settings saved to local session & synced with storefront!");
+      console.error("API save background error:", err);
+      toast.error(err.response?.data?.message || "Failed to save background to server database. Please check connection.");
     } finally {
       setSubmitting(false);
     }
